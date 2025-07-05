@@ -20,65 +20,65 @@ You can start editing the page by modifying `src/App.tsx`. The page auto-updates
 
 This project uses [Bun](https://bun.sh/) as the package manager:
 
-- Install dependencies: `bun add <package-name>`
-- Run scripts: `bun <script-name>`
-- Manage dev dependencies: `bun add -d <package-name>`
+* Install dependencies: `bun add <package-name>`
+* Run scripts: `bun <script-name>`
+* Manage dev dependencies: `bun add -d <package-name>`
 
 ### Theme Customization
 
 The project uses Tailwind CSS V4 with a theme defined in:
 
-- `src/index.css` - For CSS variables including colors in OKLCH format and custom theming
-- Tailwind V4 uses the new `@theme` directive for configuration
+* `src/index.css` - For CSS variables including colors in OKLCH format and custom theming
+* Tailwind V4 uses the new `@theme` directive for configuration
 
 ### ShadCN UI Components
 
 This project uses [ShadCN UI](https://ui.shadcn.com) for styled components. The components are incorporated directly into the codebase (not as dependencies), making them fully customizable. All components have been installed:
 
-- accordion
-- alert-dialog
-- alert
-- aspect-ratio
-- avatar
-- badge
-- breadcrumb
-- button
-- calendar
-- card
-- carousel
-- chart
-- checkbox
-- collapsible
-- command
-- context-menu
-- dialog
-- drawer
-- dropdown-menu
-- form
-- hover-card
-- input-otp
-- input
-- label
-- menubar
-- navigation-menu
-- pagination
-- popover
-- progress
-- radio-group
-- scroll-area
-- select
-- separator
-- sheet
-- skeleton
-- slider
-- sonner
-- switch
-- table
-- tabs
-- textarea
-- toast
-- toggle-group
-- toggle
+* accordion
+* alert-dialog
+* alert
+* aspect-ratio
+* avatar
+* badge
+* breadcrumb
+* button
+* calendar
+* card
+* carousel
+* chart
+* checkbox
+* collapsible
+* command
+* context-menu
+* dialog
+* drawer
+* dropdown-menu
+* form
+* hover-card
+* input-otp
+* input
+* label
+* menubar
+* navigation-menu
+* pagination
+* popover
+* progress
+* radio-group
+* scroll-area
+* select
+* separator
+* sheet
+* skeleton
+* slider
+* sonner
+* switch
+* table
+* tabs
+* textarea
+* toast
+* toggle-group
+* toggle
 
 ### Icon Library
 
@@ -98,8 +98,8 @@ import { ArrowRight } from "lucide-react";
 
 This project uses Google Fonts with:
 
-- Inter (sans-serif)
-- Playfair Display (serif)
+* Inter (sans-serif)
+* Playfair Display (serif)
 
 The font is imported via Google Fonts CDN in `src/index.css` and configured in the Tailwind theme:
 
@@ -134,16 +134,20 @@ bun run preview
 
 The built files will be in the `dist` directory, ready for deployment to any static hosting service.
 
-### Handling Unknown Routes
+## License
+
+This project is licensed under the [MIT License](../LICENSE).
+
+## Handling Unknown Routes
 
 For single-page applications, you may need to serve `index.html` when a user navigates directly to an unknown route.
 
-#### Amazon S3/CloudFront
+### Amazon S3/CloudFront
 
 1. Enable static website hosting on the bucket and set **Index document** and **Error document** to `index.html`.
 2. If using CloudFront, configure a *Custom Error Response* for HTTP 404 (and 403 if needed) that responds with `/index.html` and a 200 status code.
 
-#### Netlify
+### Netlify
 
 Add a `_redirects` file to the `dist` folder before deploying:
 
@@ -151,7 +155,7 @@ Add a `_redirects` file to the `dist` folder before deploying:
 /*    /index.html   200
 ```
 
-#### Cloudflare Pages
+### Cloudflare Pages
 
 Add a `_redirects` file (or create a `public/_redirects` entry) containing:
 
@@ -159,7 +163,7 @@ Add a `_redirects` file (or create a `public/_redirects` entry) containing:
 /*    /index.html   200
 ```
 
-#### Basic Static Hosts
+### Basic Static Hosts
 
 If your host does not support custom redirects, include a `404.html` file that redirects to `/index.html`:
 
@@ -167,4 +171,3 @@ If your host does not support custom redirects, include a `404.html` file that r
 <!DOCTYPE html>
 <meta http-equiv="refresh" content="0; url=/index.html" />
 ```
-
