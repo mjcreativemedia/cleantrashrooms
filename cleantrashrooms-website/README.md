@@ -133,3 +133,38 @@ bun run preview
 ```
 
 The built files will be in the `dist` directory, ready for deployment to any static hosting service.
+
+### Handling Unknown Routes
+
+For single-page applications, you may need to serve `index.html` when a user navigates directly to an unknown route.
+
+#### Amazon S3/CloudFront
+
+1. Enable static website hosting on the bucket and set **Index document** and **Error document** to `index.html`.
+2. If using CloudFront, configure a *Custom Error Response* for HTTP 404 (and 403 if needed) that responds with `/index.html` and a 200 status code.
+
+#### Netlify
+
+Add a `_redirects` file to the `dist` folder before deploying:
+
+```
+/*    /index.html   200
+```
+
+#### Cloudflare Pages
+
+Add a `_redirects` file (or create a `public/_redirects` entry) containing:
+
+```
+/*    /index.html   200
+```
+
+#### Basic Static Hosts
+
+If your host does not support custom redirects, include a `404.html` file that redirects to `/index.html`:
+
+```html
+<!DOCTYPE html>
+<meta http-equiv="refresh" content="0; url=/index.html" />
+```
+
