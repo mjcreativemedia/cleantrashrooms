@@ -1,18 +1,18 @@
-# Scout Vite Template
+# CleanTrashRooms Portal
 
-This is a [Vite](https://vite.dev) project bootstrapped with React + TypeScript and configured with TailwindCSS v4 and ShadCN UI.
+CleanTrashRooms Portal is a web application for technicians and clients to manage service logs, photos, and schedules. It is built with [Vite](https://vite.dev), React, TypeScript, TailwindCSS v4, and ShadCN UI.
 
 ## Getting Started
 
-First, run the development server:
+Run the development server:
 
 ```bash
 bun dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
+Open [http://localhost:5173](http://localhost:5173) in your browser to view the portal.
 
-You can start editing the page by modifying `src/App.tsx`. The page auto-updates as you edit the file.
+Begin customizing the portal by editing `src/App.tsx`; changes update automatically.
 
 ## Project Configuration
 
