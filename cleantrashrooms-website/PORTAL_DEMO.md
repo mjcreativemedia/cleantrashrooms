@@ -2,7 +2,7 @@
 
 ## 🎯 Functional Portal Features
 
-### ✅ Portal Admin (`/portal`)
+### ✅ Portal Admin (`/admin`)
 **For technicians and management:**
 - **Submit Service Log**: Complete form with file uploads
   - Client ID and Name fields
@@ -25,9 +25,9 @@
   - Date/time preferences
   - Details textarea
 
-### ✅ Private Client Portals (`/portal/[client-id]`)
+### ✅ Private Client Portals (`/admin/[client-id]`)
 **For individual clients:**
-- Private URL structure: `/portal/sunset-towers`, `/portal/oak-gardens`, etc.
+- Private URL structure: `/admin/sunset-towers`, `/admin/oak-gardens`, etc.
 - Client-specific service history
 - Before/after photo documentation
 - Service notes and details
@@ -43,7 +43,7 @@
 
 ### Client Management  
 - `GET /api/clients` - Get all clients
-- `GET /api/portal/:clientId` - Get client-specific portal data
+- `GET /api/admin/:clientId` - Get client-specific portal data
 
 ### Service Requests
 - `POST /api/service-requests` - Create service requests
@@ -77,9 +77,9 @@ interface ServiceLog {
 - Blog: `/blog`
 
 ### Portal Access
-- Admin Portal: `/portal` (for technicians and management)
-- Sunset Towers: `/portal/sunset-towers` (private client access)
-- Oak Gardens: `/portal/oak-gardens` (private client access)
+- Admin Portal: `/admin` (for technicians and management)
+- Sunset Towers: `/admin/sunset-towers` (private client access)
+- Oak Gardens: `/admin/oak-gardens` (private client access)
 
 ## 🚀 Key Features Implemented
 
@@ -100,7 +100,7 @@ interface ServiceLog {
 ## 💡 Usage Instructions
 
 ### For Technicians:
-1. Go to `/portal`
+1. Go to `/admin`
 2. Fill out service completion form
 3. Upload before/after photos
 4. Submit service notes
