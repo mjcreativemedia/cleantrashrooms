@@ -12,7 +12,10 @@ fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => cb(null, file.originalname)
+  filename: (_req, file, cb) => {
+    const unique = Date.now() + '-' + file.originalname;
+    cb(null, unique);
+  }
 });
 
 const upload = multer({ storage });
@@ -32,13 +35,13 @@ app.post(
 
     if (files?.beforePhoto?.[0]) {
       const f = files.beforePhoto[0];
-      console.log(`Saved file: ${f.originalname} -> ${f.filename}`);
+      console.log(`Saved file: ${f.originalname} as ${f.filename}`);
       result.beforePhoto = `/uploads/${f.filename}`;
     }
 
     if (files?.afterPhoto?.[0]) {
       const f = files.afterPhoto[0];
-      console.log(`Saved file: ${f.originalname} -> ${f.filename}`);
+      console.log(`Saved file: ${f.originalname} as ${f.filename}`);
       result.afterPhoto = `/uploads/${f.filename}`;
     }
 
