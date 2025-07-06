@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from 'react';
 
+const API_URL = 'http://localhost:3001';
+
 // Types
 interface ServiceLog {
   id: string;
@@ -168,10 +170,24 @@ const api = {
     const serviceType = formData.get('serviceType') as string;
     const notes = formData.get('notes') as string;
     
-    // For demo purposes, we'll use default images
-    // In production, you'd upload the actual files
-    const beforePhoto = '/before-after-cleaning.jpg';
-    const afterPhoto = '/clean-trash-room.jpg';
+    const beforeFile = formData.get('beforePhoto') as File | null;
+    const afterFile = formData.get('afterPhoto') as File | null;
+
+    async function uploadFile(file: File | null): Promise<string> {
+      if (!file || file.size === 0) return '';
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${API_URL}/api/upload`, {
+        method: 'POST',
+        body: fd
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      return data.path as string;
+    }
+
+    const beforePhoto = await uploadFile(beforeFile) || '/before-after-cleaning.jpg';
+    const afterPhoto = await uploadFile(afterFile) || '/clean-trash-room.jpg';
     
     const now = new Date();
     const newServiceLog: ServiceLog = {

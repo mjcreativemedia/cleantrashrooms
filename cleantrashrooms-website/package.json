@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "bun run server.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.832.0",
@@ -52,6 +53,7 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.511.0",
     "mime-types": "^3.0.1",
+    "multer": "^2.0.1",
     "next-themes": "^0.4.6",
     "react": "^19.1.0",
     "react-day-picker": "8.10.1",
