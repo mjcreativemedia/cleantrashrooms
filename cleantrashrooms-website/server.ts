@@ -10,15 +10,34 @@ fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => cb(null, file.originalname)
+  filename: (_req, file, cb) => {
+    const fullPath = path.join(uploadsDir, file.originalname);
+    if (fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
+    }
+    cb(null, file.originalname);
+  }
 });
 
 const upload = multer({ storage });
 
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  const filePath = `/uploads/${req.file?.originalname}`;
-  res.json({ path: filePath });
-});
+app.post(
+  '/api/upload',
+  upload.fields([
+    { name: 'beforePhoto', maxCount: 1 },
+    { name: 'afterPhoto', maxCount: 1 }
+  ]),
+  (req, res) => {
+    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+    const before = files?.beforePhoto?.[0];
+    const after = files?.afterPhoto?.[0];
+
+    const beforePath = before ? `/uploads/${before.originalname}` : undefined;
+    const afterPath = after ? `/uploads/${after.originalname}` : undefined;
+
+    res.json({ beforePhoto: beforePath, afterPhoto: afterPath });
+  }
+);
 
 app.use('/uploads', express.static(uploadsDir));
 
