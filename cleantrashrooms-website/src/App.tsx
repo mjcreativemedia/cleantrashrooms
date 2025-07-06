@@ -168,6 +168,8 @@ const api = {
     const clientName = formData.get('clientName') as string;
     const technician = formData.get('technician') as string;
     const serviceType = formData.get('serviceType') as string;
+    const serviceDate = formData.get('serviceDate') as string;
+    const serviceTime = formData.get('serviceTime') as string;
     const notes = formData.get('notes') as string;
     
     const beforeFile = formData.get('beforePhoto') as File | null;
@@ -196,19 +198,18 @@ const api = {
       ? `${API_URL}${uploadRes.afterPhoto}`
       : '/clean-trash-room.jpg';
     
-    const now = new Date();
     const newServiceLog: ServiceLog = {
       id: this.generateId(),
       clientId,
       clientName,
-      date: now.toISOString().split('T')[0], // YYYY-MM-DD
-      time: now.toTimeString().slice(0, 5), // HH:MM
+      date: serviceDate,
+      time: serviceTime,
       technician,
       serviceType: serviceType as ServiceLog['serviceType'],
       beforePhoto,
       afterPhoto,
       notes,
-      createdAt: now.toISOString()
+      createdAt: new Date().toISOString()
     };
     
     // Add to beginning for most recent first
@@ -1151,6 +1152,8 @@ function AdminPage() {
     clientName: '',
     technician: '',
     serviceType: '',
+    serviceDate: '',
+    serviceTime: '',
     notes: ''
   });
 
@@ -1213,6 +1216,8 @@ function AdminPage() {
         clientName: '',
         technician: '',
         serviceType: '',
+        serviceDate: '',
+        serviceTime: '',
         notes: ''
       });
       
@@ -1325,6 +1330,28 @@ function AdminPage() {
                         <option value="Haul Away">Haul Away</option>
                         <option value="Deep Clean">Deep Clean</option>
                       </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="serviceDate">Service Date</Label>
+                      <Input
+                        id="serviceDate"
+                        name="serviceDate"
+                        type="date"
+                        value={uploadForm.serviceDate}
+                        onChange={(e) => setUploadForm(prev => ({ ...prev, serviceDate: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="serviceTime">Service Time</Label>
+                      <Input
+                        id="serviceTime"
+                        name="serviceTime"
+                        type="time"
+                        value={uploadForm.serviceTime}
+                        onChange={(e) => setUploadForm(prev => ({ ...prev, serviceTime: e.target.value }))}
+                        required
+                      />
                     </div>
                   </div>
 
