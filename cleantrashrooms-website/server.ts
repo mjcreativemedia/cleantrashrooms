@@ -24,14 +24,15 @@ app.post(
   '/api/upload',
   upload.fields([
     { name: 'beforePhoto', maxCount: 1 },
-    { name: 'afterPhoto', maxCount: 1 }
+    { name: 'afterPhoto', maxCount: 1 },
+    { name: 'miscPhotos', maxCount: 5 }
   ]),
   (req, res) => {
     const files = req.files as {
       [fieldname: string]: Express.Multer.File[];
     };
 
-    const result: Record<string, string> = {};
+    const result: Record<string, any> = {};
 
     if (files?.beforePhoto?.[0]) {
       const f = files.beforePhoto[0];
@@ -43,6 +44,13 @@ app.post(
       const f = files.afterPhoto[0];
       console.log(`Saved file: ${f.originalname} as ${f.filename}`);
       result.afterPhoto = `/uploads/${f.filename}`;
+    }
+
+    if (files?.miscPhotos?.length) {
+      result.miscPhotos = files.miscPhotos.map(f => {
+        console.log(`Saved file: ${f.originalname} as ${f.filename}`);
+        return `/uploads/${f.filename}`;
+      });
     }
 
     res.json(result);
