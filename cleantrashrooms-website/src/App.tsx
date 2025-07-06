@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Trash2, 
@@ -39,6 +40,7 @@ interface ServiceLog {
   beforePhoto: string;
   afterPhoto: string;
   notes: string;
+  issues: string[];
   createdAt: string;
 }
 
@@ -67,6 +69,7 @@ const api = {
           beforePhoto: '/before-after-cleaning.jpg',
           afterPhoto: '/clean-trash-room.jpg',
           notes: 'Routine cleaning completed. Removed 3 overflow bags from dumpster area. Applied sanitizer to all surfaces.',
+          issues: [],
           createdAt: '2024-03-15T07:30:00Z'
         },
         {
@@ -80,6 +83,7 @@ const api = {
           beforePhoto: '/before-after-cleaning.jpg',
           afterPhoto: '/clean-trash-room.jpg',
           notes: 'Standard morning service. Minor spillage cleaned up near compactor.',
+          issues: [],
           createdAt: '2024-03-14T07:15:00Z'
         },
         {
@@ -93,6 +97,7 @@ const api = {
           beforePhoto: '/before-after-cleaning.jpg',
           afterPhoto: '/clean-trash-room.jpg',
           notes: 'Removed large furniture items left by tenant. Extra sanitization performed due to previous buildup.',
+          issues: [],
           createdAt: '2024-03-13T06:45:00Z'
         },
         {
@@ -106,6 +111,7 @@ const api = {
           beforePhoto: '/before-after-cleaning.jpg',
           afterPhoto: '/clean-trash-room.jpg',
           notes: 'Regular morning cleaning. Organized recycling bins. No major issues.',
+          issues: [],
           createdAt: '2024-03-15T08:00:00Z'
         }
       ];
@@ -183,6 +189,10 @@ const api = {
     const serviceDate = formData.get('serviceDate') as string;
     const serviceTime = formData.get('serviceTime') as string;
     const notes = formData.get('notes') as string;
+    const issuesRaw = formData.getAll('issues') as string[];
+    const otherIssue = formData.get('otherIssue') as string | null;
+    const issues = issuesRaw.filter(i => i !== 'Other');
+    if (otherIssue && otherIssue.trim()) issues.push(otherIssue.trim());
     
     const beforeFile = formData.get('beforePhoto') as File | null;
     const afterFile = formData.get('afterPhoto') as File | null;
@@ -221,6 +231,7 @@ const api = {
       beforePhoto,
       afterPhoto,
       notes,
+      issues,
       createdAt: new Date().toISOString()
     };
     
@@ -1157,6 +1168,13 @@ function AdminPage() {
   const [activeTab, setActiveTab] = useState('upload');
   const [serviceLogs, setServiceLogs] = useState<ServiceLog[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const issueOptions = [
+    'Overflowing bins',
+    'Cardboard pile-up',
+    'Roaches or pests',
+    'Strong smell',
+    'Trash not bagged'
+  ];
   const [filters, setFilters] = useState({
     clientId: '',
     startDate: '',
@@ -1176,7 +1194,9 @@ function AdminPage() {
     serviceType: '',
     serviceDate: '',
     serviceTime: '',
-    notes: ''
+    notes: '',
+    issues: [] as string[],
+    otherIssue: ''
   });
 
   const [clientForm, setClientForm] = useState({
@@ -1222,6 +1242,18 @@ function AdminPage() {
     loadServiceLogs();
   };
 
+  const toggleIssue = (issue: string) => {
+    setUploadForm(prev => {
+      const exists = prev.issues.includes(issue);
+      const issues = exists ? prev.issues.filter(i => i !== issue) : [...prev.issues, issue];
+      return { ...prev, issues };
+    });
+  };
+
+  const handleOtherIssueChange = (value: string) => {
+    setUploadForm(prev => ({ ...prev, otherIssue: value }));
+  };
+
   const handleUploadSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -1233,7 +1265,8 @@ function AdminPage() {
       
       // Add form fields to FormData
       Object.entries(uploadForm).forEach(([key, value]) => {
-        if (value) formData.set(key, value);
+        if (key === 'issues' || key === 'otherIssue') return;
+        if (value) formData.set(key, value as string);
       });
 
       const response = await api.createServiceLog(formData);
@@ -1247,7 +1280,9 @@ function AdminPage() {
         serviceType: '',
         serviceDate: '',
         serviceTime: '',
-        notes: ''
+        notes: '',
+        issues: [],
+        otherIssue: ''
       });
       
       // Reset file inputs
@@ -1434,6 +1469,45 @@ function AdminPage() {
                   </div>
 
                   <div>
+                    <Label>Issues Found</Label>
+                    <div className="mt-2 space-y-2">
+                      {issueOptions.map(option => (
+                        <div key={option} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`issue-${option}`}
+                            name="issues"
+                            value={option}
+                            checked={uploadForm.issues.includes(option)}
+                            onCheckedChange={() => toggleIssue(option)}
+                          />
+                          <label htmlFor={`issue-${option}`} className="text-sm">
+                            {option}
+                          </label>
+                        </div>
+                      ))}
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="issue-other"
+                          name="issues"
+                          value="Other"
+                          checked={uploadForm.issues.includes('Other')}
+                          onCheckedChange={() => toggleIssue('Other')}
+                        />
+                        <label htmlFor="issue-other" className="text-sm">Other</label>
+                        {uploadForm.issues.includes('Other') && (
+                          <Input
+                            id="otherIssue"
+                            name="otherIssue"
+                            value={uploadForm.otherIssue}
+                            onChange={(e) => handleOtherIssueChange(e.target.value)}
+                            className="flex-1"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
                     <Label htmlFor="notes">Service Notes</Label>
                     <Textarea
                       id="notes"
@@ -1586,6 +1660,16 @@ function AdminPage() {
                         <div>
                           <p className="text-sm font-medium text-gray-700 mb-1">Service Notes:</p>
                           <p className="text-gray-600">{log.notes}</p>
+                          {log.issues && log.issues.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-sm font-medium text-gray-700 mb-1">Issues Found:</p>
+                              <ul className="list-disc list-inside text-gray-600">
+                                {log.issues.map((issue, idx) => (
+                                  <li key={idx}>{issue}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))
@@ -1813,6 +1897,16 @@ function ClientPortal() {
                     <div>
                       <p className="text-sm font-medium text-gray-700 mb-1">Service Notes:</p>
                       <p className="text-gray-600">{log.notes}</p>
+                      {log.issues && log.issues.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-gray-700 mb-1">Issues Found:</p>
+                          <ul className="list-disc list-inside text-gray-600">
+                            {log.issues.map((issue, idx) => (
+                              <li key={idx}>{issue}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
