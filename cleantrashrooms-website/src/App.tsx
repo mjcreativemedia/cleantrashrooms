@@ -189,8 +189,12 @@ const api = {
     }
 
     const uploadRes = await uploadFiles();
-    const beforePhoto = uploadRes.beforePhoto || '/before-after-cleaning.jpg';
-    const afterPhoto = uploadRes.afterPhoto || '/clean-trash-room.jpg';
+    const beforePhoto = uploadRes.beforePhoto
+      ? `${API_URL}${uploadRes.beforePhoto}`
+      : '/before-after-cleaning.jpg';
+    const afterPhoto = uploadRes.afterPhoto
+      ? `${API_URL}${uploadRes.afterPhoto}`
+      : '/clean-trash-room.jpg';
     
     const now = new Date();
     const newServiceLog: ServiceLog = {
