@@ -17,23 +17,34 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  if (req.file) {
-    console.log(`Saved file: ${req.file.originalname} -> ${req.file.filename}`);
-  } else if (req.files) {
-    const before = Object.values(req.files).map(
-      (f) => (f as Express.Multer.File[])[0].originalname
-    );
-    const after = Object.values(req.files).map(
-      (f) => (f as Express.Multer.File[])[0].filename
-    );
-    console.log('Saved files:', before);
-    console.log('Renamed to:', after);
-  }
+app.post(
+  '/api/upload',
+  upload.fields([
+    { name: 'beforePhoto', maxCount: 1 },
+    { name: 'afterPhoto', maxCount: 1 }
+  ]),
+  (req, res) => {
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
 
-  const filePath = `/uploads/${req.file?.filename ?? ''}`;
-  res.json({ path: filePath });
-});
+    const result: Record<string, string> = {};
+
+    if (files?.beforePhoto?.[0]) {
+      const f = files.beforePhoto[0];
+      console.log(`Saved file: ${f.originalname} -> ${f.filename}`);
+      result.beforePhoto = `/uploads/${f.filename}`;
+    }
+
+    if (files?.afterPhoto?.[0]) {
+      const f = files.afterPhoto[0];
+      console.log(`Saved file: ${f.originalname} -> ${f.filename}`);
+      result.afterPhoto = `/uploads/${f.filename}`;
+    }
+
+    res.json(result);
+  }
+);
 
 app.use('/uploads', express.static(uploadsDir));
 
