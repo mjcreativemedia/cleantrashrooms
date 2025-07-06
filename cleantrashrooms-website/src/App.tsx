@@ -39,6 +39,7 @@ interface ServiceLog {
   serviceType: 'Daily Clean' | 'End of Day' | 'Haul Away' | 'Deep Clean';
   beforePhoto: string;
   afterPhoto: string;
+  miscPhotos: string[];
   notes: string;
   issues: string[];
   createdAt: string;
@@ -68,6 +69,7 @@ const api = {
           serviceType: 'Daily Clean',
           beforePhoto: '/before-after-cleaning.jpg',
           afterPhoto: '/clean-trash-room.jpg',
+          miscPhotos: [],
           notes: 'Routine cleaning completed. Removed 3 overflow bags from dumpster area. Applied sanitizer to all surfaces.',
           issues: [],
           createdAt: '2024-03-15T07:30:00Z'
@@ -82,6 +84,7 @@ const api = {
           serviceType: 'Daily Clean',
           beforePhoto: '/before-after-cleaning.jpg',
           afterPhoto: '/clean-trash-room.jpg',
+          miscPhotos: [],
           notes: 'Standard morning service. Minor spillage cleaned up near compactor.',
           issues: [],
           createdAt: '2024-03-14T07:15:00Z'
@@ -96,6 +99,7 @@ const api = {
           serviceType: 'Haul Away',
           beforePhoto: '/before-after-cleaning.jpg',
           afterPhoto: '/clean-trash-room.jpg',
+          miscPhotos: [],
           notes: 'Removed large furniture items left by tenant. Extra sanitization performed due to previous buildup.',
           issues: [],
           createdAt: '2024-03-13T06:45:00Z'
@@ -110,6 +114,7 @@ const api = {
           serviceType: 'Daily Clean',
           beforePhoto: '/before-after-cleaning.jpg',
           afterPhoto: '/clean-trash-room.jpg',
+          miscPhotos: [],
           notes: 'Regular morning cleaning. Organized recycling bins. No major issues.',
           issues: [],
           createdAt: '2024-03-15T08:00:00Z'
@@ -196,20 +201,28 @@ const api = {
     
     const beforeFile = formData.get('beforePhoto') as File | null;
     const afterFile = formData.get('afterPhoto') as File | null;
+    const miscFiles = formData.getAll('miscPhotos') as File[];
 
     async function uploadFiles() {
-      if ((!beforeFile || beforeFile.size === 0) && (!afterFile || afterFile.size === 0)) {
-        return {} as Record<string, string>;
+      if (
+        (!beforeFile || beforeFile.size === 0) &&
+        (!afterFile || afterFile.size === 0) &&
+        miscFiles.every(f => !f || f.size === 0)
+      ) {
+        return {} as Record<string, any>;
       }
       const fd = new FormData();
       if (beforeFile && beforeFile.size > 0) fd.append('beforePhoto', beforeFile);
       if (afterFile && afterFile.size > 0) fd.append('afterPhoto', afterFile);
+      miscFiles.forEach(f => {
+        if (f && f.size > 0) fd.append('miscPhotos', f);
+      });
       const res = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         body: fd
       });
       if (!res.ok) throw new Error('Upload failed');
-      return (await res.json()) as Record<string, string>;
+      return (await res.json()) as Record<string, any>;
     }
 
     const uploadRes = await uploadFiles();
@@ -219,6 +232,9 @@ const api = {
     const afterPhoto = uploadRes.afterPhoto
       ? `${API_URL}${uploadRes.afterPhoto}`
       : '/clean-trash-room.jpg';
+    const miscPhotos = Array.isArray(uploadRes.miscPhotos)
+      ? (uploadRes.miscPhotos as string[]).map(p => `${API_URL}${p}`)
+      : [];
     
     const newServiceLog: ServiceLog = {
       id: this.generateId(),
@@ -230,6 +246,7 @@ const api = {
       serviceType: serviceType as ServiceLog['serviceType'],
       beforePhoto,
       afterPhoto,
+      miscPhotos,
       notes,
       issues,
       createdAt: new Date().toISOString()
@@ -1457,16 +1474,27 @@ function AdminPage() {
                         accept="image/*"
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="afterPhoto">After Photo</Label>
-                      <Input
-                        id="afterPhoto"
-                        name="afterPhoto"
-                        type="file"
-                        accept="image/*"
-                      />
-                    </div>
+                  <div>
+                    <Label htmlFor="afterPhoto">After Photo</Label>
+                    <Input
+                      id="afterPhoto"
+                      name="afterPhoto"
+                      type="file"
+                      accept="image/*"
+                    />
                   </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="miscPhotos">Misc Photos (optional)</Label>
+                  <Input
+                    id="miscPhotos"
+                    name="miscPhotos"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                  />
+                </div>
 
                   <div>
                     <Label>Issues Found</Label>
@@ -1639,26 +1667,39 @@ function AdminPage() {
                         </div>
                         
                         <div className="grid md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <p className="text-sm font-medium text-gray-700 mb-2">Before</p>
-                            <img 
-                              src={log.beforePhoto} 
-                              alt="Before cleaning" 
-                              className="w-full h-48 object-cover rounded-lg"
-                            />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-700 mb-2">After</p>
-                            <img 
-                              src={log.afterPhoto} 
-                              alt="After cleaning" 
-                              className="w-full h-48 object-cover rounded-lg"
-                            />
-                          </div>
-                        </div>
-                        
                         <div>
-                          <p className="text-sm font-medium text-gray-700 mb-1">Service Notes:</p>
+                          <p className="text-sm font-medium text-gray-700 mb-2">Before</p>
+                          <img
+                            src={log.beforePhoto}
+                            alt="Before cleaning"
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 mb-2">After</p>
+                          <img
+                            src={log.afterPhoto}
+                            alt="After cleaning"
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                        </div>
+                      </div>
+
+                      {log.miscPhotos && log.miscPhotos.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+                          {log.miscPhotos.map((src, idx) => (
+                            <img
+                              key={idx}
+                              src={src}
+                              alt={`Misc ${idx + 1}`}
+                              className="w-full h-32 object-cover rounded-lg"
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-1">Service Notes:</p>
                           <p className="text-gray-600">{log.notes}</p>
                           {log.issues && log.issues.length > 0 && (
                             <div className="mt-2">
@@ -1878,22 +1919,35 @@ function ClientPortal() {
                     <div className="grid md:grid-cols-2 gap-4 mb-4">
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-2">Before</p>
-                        <img 
-                          src={log.beforePhoto} 
-                          alt="Before cleaning" 
+                        <img
+                          src={log.beforePhoto}
+                          alt="Before cleaning"
                           className="w-full h-48 object-cover rounded-lg"
                         />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-2">After</p>
-                        <img 
-                          src={log.afterPhoto} 
-                          alt="After cleaning" 
+                        <img
+                          src={log.afterPhoto}
+                          alt="After cleaning"
                           className="w-full h-48 object-cover rounded-lg"
                         />
                       </div>
                     </div>
-                    
+
+                    {log.miscPhotos && log.miscPhotos.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+                        {log.miscPhotos.map((src, idx) => (
+                          <img
+                            key={idx}
+                            src={src}
+                            alt={`Misc ${idx + 1}`}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                        ))}
+                      </div>
+                    )}
+
                     <div>
                       <p className="text-sm font-medium text-gray-700 mb-1">Service Notes:</p>
                       <p className="text-gray-600">{log.notes}</p>
