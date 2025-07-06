@@ -29,6 +29,19 @@ bun dev
 
 Visit <http://localhost:5173> to view the portal.
 
+## Upload Server
+
+The project includes a small Express server for file uploads. Start it from the
+`cleantrashrooms-website` folder:
+
+```bash
+bun run server
+```
+
+Uploaded files are saved under `public/uploads`. When the server runs on
+`localhost:3001` and the frontend on `localhost:5173`, you may need to enable
+CORS or proxy requests to avoid cross-origin errors.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
