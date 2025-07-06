@@ -20,7 +20,8 @@ import {
   Menu,
   X,
   Filter,
-  Download
+  Download,
+  Users
 } from "lucide-react";
 import { useState, useEffect } from 'react';
 
@@ -44,6 +45,8 @@ interface ServiceLog {
 interface Client {
   id: string;
   name: string;
+  address?: string;
+  notes?: string;
 }
 
 // API functions with localStorage persistence
@@ -107,6 +110,15 @@ const api = {
         }
       ];
       localStorage.setItem('cleantrashrooms_service_logs', JSON.stringify(defaultLogs));
+    }
+
+    const existingClients = localStorage.getItem('cleantrashrooms_clients');
+    if (!existingClients) {
+      const defaultClients = [
+        { id: 'sunset-towers', name: 'Sunset Towers' },
+        { id: 'oak-gardens', name: 'Oak Gardens Apartments' }
+      ];
+      localStorage.setItem('cleantrashrooms_clients', JSON.stringify(defaultClients));
     }
   },
 
@@ -224,33 +236,43 @@ const api = {
     return { serviceRequest: data, message: "Service request submitted successfully" };
   },
 
+  getStoredClients(): Client[] {
+    this.initializeStorage();
+    const stored = localStorage.getItem('cleantrashrooms_clients');
+    return stored ? JSON.parse(stored) : [];
+  },
+
+  saveClientsToStorage(clients: Client[]) {
+    localStorage.setItem('cleantrashrooms_clients', JSON.stringify(clients));
+  },
+
   async getClients() {
-    const allLogs = this.getStoredLogs();
-    const uniqueClients = new Map();
-    
-    allLogs.forEach(log => {
-      if (!uniqueClients.has(log.clientId)) {
-        uniqueClients.set(log.clientId, {
-          id: log.clientId,
-          name: log.clientName
-        });
-      }
-    });
-    
-    return { clients: Array.from(uniqueClients.values()) };
+    return { clients: this.getStoredClients() };
+  },
+
+  async addClient(client: Client) {
+    const clients = this.getStoredClients();
+    if (clients.some(c => c.id === client.id)) {
+      throw new Error('Client ID already exists');
+    }
+    clients.push(client);
+    this.saveClientsToStorage(clients);
+    return { client };
   },
 
   async getPortalData(clientId: string) {
     const allLogs = this.getStoredLogs();
     const clientLogs = allLogs.filter(log => log.clientId === clientId);
-    
+
+    const clientInfo = this.getStoredClients().find(c => c.id === clientId);
+
     // Always return data, even if no logs exist
-    const clientName = clientLogs.length > 0 
-      ? clientLogs[0].clientName 
-      : clientId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
-    
+    const clientName = clientInfo?.name ?? (clientLogs.length > 0
+      ? clientLogs[0].clientName
+      : clientId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()));
+
     return {
-      client: { id: clientId, name: clientName },
+      client: { id: clientId, name: clientName, address: clientInfo?.address, notes: clientInfo?.notes },
       serviceLogs: clientLogs,
       serviceRequests: []
     };
@@ -1157,6 +1179,13 @@ function AdminPage() {
     notes: ''
   });
 
+  const [clientForm, setClientForm] = useState({
+    clientId: '',
+    clientName: '',
+    address: '',
+    notes: ''
+  });
+
   useEffect(() => {
     loadServiceLogs();
     loadClients();
@@ -1235,6 +1264,26 @@ function AdminPage() {
     }
   };
 
+  const handleClientSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    try {
+      await api.addClient({
+        id: clientForm.clientId,
+        name: clientForm.clientName,
+        address: clientForm.address,
+        notes: clientForm.notes
+      });
+      setSuccess('Client added successfully!');
+      setClientForm({ clientId: '', clientName: '', address: '', notes: '' });
+      loadClients();
+    } catch (err: any) {
+      setError(err.message || 'Failed to add client');
+      console.error(err);
+    }
+  };
+
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1260,9 +1309,10 @@ function AdminPage() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="upload">Submit Service Log</TabsTrigger>
             <TabsTrigger value="view">View All Service History</TabsTrigger>
+            <TabsTrigger value="clients">Manage Clients</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload" className="mt-8">
@@ -1280,15 +1330,24 @@ function AdminPage() {
                 <form onSubmit={handleUploadSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="clientId">Client ID</Label>
-                      <Input
+                      <Label htmlFor="clientId">Client</Label>
+                      <select
                         id="clientId"
                         name="clientId"
                         value={uploadForm.clientId}
-                        onChange={(e) => setUploadForm(prev => ({ ...prev, clientId: e.target.value }))}
-                        placeholder="e.g., sunset-towers"
+                        onChange={(e) => {
+                          const id = e.target.value;
+                          const client = clients.find(c => c.id === id);
+                          setUploadForm(prev => ({ ...prev, clientId: id, clientName: client?.name || '' }));
+                        }}
+                        className="w-full p-2 border border-gray-300 rounded-md"
                         required
-                      />
+                      >
+                        <option value="">Select client</option>
+                        {clients.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <Label htmlFor="clientName">Client Name</Label>
@@ -1296,9 +1355,7 @@ function AdminPage() {
                         id="clientName"
                         name="clientName"
                         value={uploadForm.clientName}
-                        onChange={(e) => setUploadForm(prev => ({ ...prev, clientName: e.target.value }))}
-                        placeholder="e.g., Sunset Towers"
-                        required
+                        readOnly
                       />
                     </div>
                   </div>
@@ -1543,6 +1600,83 @@ function AdminPage() {
                     </Button>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="clients" className="mt-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Manage Clients
+                </CardTitle>
+                <CardDescription>Add or update client records</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleClientSubmit} className="space-y-4 mb-8">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="client-form-id">Client ID</Label>
+                      <Input
+                        id="client-form-id"
+                        value={clientForm.clientId}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, clientId: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="client-form-name">Client Name</Label>
+                      <Input
+                        id="client-form-name"
+                        value={clientForm.clientName}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, clientName: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="client-form-address">Address</Label>
+                      <Input
+                        id="client-form-address"
+                        value={clientForm.address}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, address: e.target.value }))}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="client-form-notes">Notes</Label>
+                      <Textarea
+                        id="client-form-notes"
+                        value={clientForm.notes}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, notes: e.target.value }))}
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                  <Button type="submit" disabled={loading}>
+                    Add Client
+                  </Button>
+                </form>
+
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left">
+                      <th className="px-2 py-1">Client ID</th>
+                      <th className="px-2 py-1">Name</th>
+                      <th className="px-2 py-1">Address</th>
+                      <th className="px-2 py-1">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clients.map(c => (
+                      <tr key={c.id} className="border-t">
+                        <td className="px-2 py-1 font-mono">{c.id}</td>
+                        <td className="px-2 py-1">{c.name}</td>
+                        <td className="px-2 py-1">{c.address || ''}</td>
+                        <td className="px-2 py-1">{c.notes || ''}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </CardContent>
             </Card>
           </TabsContent>
