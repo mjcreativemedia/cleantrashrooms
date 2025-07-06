@@ -15,10 +15,22 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  const filePath = `/uploads/${req.file?.originalname}`;
-  res.json({ path: filePath });
-});
+app.post(
+  '/api/upload',
+  upload.fields([
+    { name: 'beforePhoto', maxCount: 1 },
+    { name: 'afterPhoto', maxCount: 1 }
+  ]),
+  (req, res) => {
+    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+    const before = files?.beforePhoto?.[0];
+    const after = files?.afterPhoto?.[0];
+    res.json({
+      beforePhoto: before ? `/uploads/${before.originalname}` : '',
+      afterPhoto: after ? `/uploads/${after.originalname}` : ''
+    });
+  }
+);
 
 app.use('/uploads', express.static(uploadsDir));
 

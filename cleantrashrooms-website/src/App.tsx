@@ -173,21 +173,19 @@ const api = {
     const beforeFile = formData.get('beforePhoto') as File | null;
     const afterFile = formData.get('afterPhoto') as File | null;
 
-    async function uploadFile(file: File | null): Promise<string> {
-      if (!file || file.size === 0) return '';
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch(`${API_URL}/api/upload`, {
-        method: 'POST',
-        body: fd
-      });
-      if (!res.ok) throw new Error('Upload failed');
-      const data = await res.json();
-      return data.path as string;
-    }
+    const uploadData = new FormData();
+    if (beforeFile && beforeFile.size > 0) uploadData.append('beforePhoto', beforeFile);
+    if (afterFile && afterFile.size > 0) uploadData.append('afterPhoto', afterFile);
 
-    const beforePhoto = await uploadFile(beforeFile) || '/before-after-cleaning.jpg';
-    const afterPhoto = await uploadFile(afterFile) || '/clean-trash-room.jpg';
+    const uploadRes = await fetch(`${API_URL}/api/upload`, {
+      method: 'POST',
+      body: uploadData
+    });
+    if (!uploadRes.ok) throw new Error('Upload failed');
+    const uploaded = await uploadRes.json();
+
+    const beforePhoto = uploaded.beforePhoto || '/before-after-cleaning.jpg';
+    const afterPhoto = uploaded.afterPhoto || '/clean-trash-room.jpg';
     
     const now = new Date();
     const newServiceLog: ServiceLog = {
